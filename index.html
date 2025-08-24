@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SMS Classification - Model Comparison</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+        
+        .api-info {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 20px;
+            color: white;
+            text-align: center;
+        }
+        
+        .comparison-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            overflow: hidden;
+        }
+        
+        .input-section {
+            padding: 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #495057;
+            font-size: 1.1em;
+        }
+        
+        textarea {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            font-size: 16px;
+            resize: vertical;
+            min-height: 120px;
+            transition: border-color 0.3s ease;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .button-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+        
+        button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            font-weight: 600;
+        }
+        
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        button:disabled {
+            background: #6c757d;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 0;
+        }
+        
+        .model-section {
+            padding: 30px;
+            position: relative;
+        }
+        
+        .model-section:first-child {
+            border-right: 1px solid #e9ecef;
+        }
+        
+        .model-header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+        
+        .model-title {
+            font-size: 1.4em;
+            font-weight: 700;
+            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .model-badge {
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 0.7em;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        
+        .original-badge {
+            background: #ffc107;
+            color: #000;
+        }
+        
+        .enhanced-badge {
+            background: #28a745;
+            color: white;
+        }
+        
+        .model-stats {
+            font-size: 0.9em;
+            color: #6c757d;
+        }
+        
+        .result-card {
+            background: #f8f9fa;
+            border: 2px solid #e9ecef;
+            border-radius: 10px;
+            padding: 20px;
+            margin-bottom: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .result-card.success {
+            border-color: #28a745;
+            background: #f8fff9;
+        }
+        
+        .result-card.warning {
+            border-color: #ffc107;
+            background: #fffdf5;
+        }
+        
+        .result-card.error {
+            border-color: #dc3545;
+            background: #fff5f5;
+        }
+        
+        .prediction {
+            font-size: 1.3em;
+            font-weight: 700;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+        
+        .confidence {
+            font-size: 1.1em;
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .confidence-bar {
+            width: 100%;
+            height: 8px;
+            background: #e9ecef;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 15px;
+        }
+        
+        .confidence-fill {
+            height: 100%;
+            transition: width 0.5s ease;
+        }
+        
+        .probabilities {
+            font-size: 0.9em;
+        }
+        
+        .prob-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            padding: 5px 0;
+        }
+        
+        .prob-label {
+            font-weight: 600;
+        }
+        
+        .prob-value {
+            font-family: monospace;
+        }
+        
+        .loading {
+            text-align: center;
+            color: #6c757d;
+            font-style: italic;
+        }
+        
+        .error-message {
+            color: #dc3545;
+            text-align: center;
+            margin: 10px 0;
+        }
+        
+        .quick-test-btn {
+            background: #6c757d;
+            margin: 5px;
+            padding: 8px 16px;
+            font-size: 0.9em;
+        }
+        
+        .comparison-summary {
+            background: #f8f9fa;
+            border-top: 1px solid #e9ecef;
+            padding: 20px 30px;
+            text-align: center;
+        }
+        
+        .winner {
+            font-size: 1.2em;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .winner.enhanced {
+            color: #28a745;
+        }
+        
+        .winner.original {
+            color: #ffc107;
+        }
+        
+        @media (max-width: 768px) {
+            .comparison-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .model-section:first-child {
+                border-right: none;
+                border-bottom: 1px solid #e9ecef;
+            }
+            
+            .button-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1> SMS Classification API</h1>
+        <p>Compare Model 1 vs Model 2 IndicBERT Models in One Service</p>
+    </div>
+    
+    <div class="api-info">
+    
+    </div>
+    
+    <div class="comparison-container">
+        <div class="input-section">
+            <div class="form-group">
+                <label for="smsText">Enter SMS Message for Classification:</label>
+                <textarea 
+                    id="smsText" 
+                    placeholder="Type your SMS message here... (e.g., 'debited A/c no.XX9519 22-08-25, 00:10:46 Ltd Not you? SMS')"
+                ></textarea>
+            </div>
+            
+            <div class="button-group">
+                <button onclick="compareModels()" id="compareBtn">⚡ Compare Models (Unified API)</button>
+                <button onclick="testProblematicCase()" class="quick-test-btn">🧪 Test Problematic Case</button>
+                <button onclick="testFoodCase()" class="quick-test-btn">🍕 Test Food Transaction</button>
+                <button onclick="testBankingCase()" class="quick-test-btn">🏦 Test Banking Case</button>
+                <button onclick="clearResults()" class="quick-test-btn">🗑️ Clear Results</button>
+            </div>
+        </div>
+        
+        <div class="comparison-grid">
+            <!-- Model 1 Model Section -->
+            <div class="model-section">
+                <div class="model-header">
+                    <div class="model-title">
+                        Model 1 Model
+                        <span class="model-badge original-badge">v1.0</span>
+                    </div>
+                   
+                </div>
+                
+                <div id="originalResult" class="result-placeholder">
+                    <div style="text-align: center; color: #6c757d; font-style: italic;">
+                        Results will appear here...
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Model 2 Model Section -->
+            <div class="model-section">
+                <div class="model-header">
+                    <div class="model-title">
+                        Model 2 Model
+                        <span class="model-badge enhanced-badge">v2.0</span>
+                    </div>
+                    
+                </div>
+                
+                <div id="enhancedResult" class="result-placeholder">
+                    <div style="text-align: center; color: #6c757d; font-style: italic;">
+                        Results will appear here...
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="comparison-summary" id="comparisonSummary" style="display: none;">
+            <div class="winner" id="winnerText"></div>
+            <div id="summaryDetails"></div>
+        </div>
+    </div>
+
+    <script>
+        const UNIFIED_API_URL = 'https://sms-classification-api-production.up.railway.app';
+        
+        function getConfidenceColor(confidence) {
+            if (confidence >= 0.9) return '#28a745';  // Green
+            if (confidence >= 0.7) return '#ffc107';  // Yellow
+            return '#dc3545';  // Red
+        }
+        
+        function getResultClass(confidence, isCorrect = null) {
+            if (isCorrect === false) return 'error';
+            if (confidence >= 0.9) return 'success';
+            if (confidence >= 0.7) return 'warning';
+            return 'error';
+        }
+        
+        function createResultCard(result, modelType) {
+            let prediction, confidence, probabilities;
+            
+            if (modelType === 'original') {
+                prediction = result.prediction;
+                confidence = result.confidence;
+                probabilities = result.probabilities;
+            } else {
+                prediction = result.predicted_category;
+                confidence = result.confidence;
+                probabilities = result.all_probabilities;
+            }
+            
+            const confidencePercent = (confidence * 100).toFixed(2);
+            
+            let extraInfo = '';
+            if (modelType === 'original' && result.post_processed) {
+                extraInfo = `<div style="margin-top: 10px; padding: 10px; background: #fff3cd; border-radius: 5px; font-size: 0.9em;">
+                    <strong>Post-processed:</strong> ${result.original_prediction} → ${result.prediction}<br>
+                    <em>Reason:</em> ${result.improvement_reason}
+                </div>`;
+            }
+            
+            return `
+                <div class="result-card ${getResultClass(confidence)}">
+                    <div class="prediction">${prediction}</div>
+                    <div class="confidence">${confidencePercent}% confidence</div>
+                    <div class="confidence-bar">
+                        <div class="confidence-fill" style="width: ${confidencePercent}%; background: ${getConfidenceColor(confidence)};"></div>
+                    </div>
+                    <div class="probabilities">
+                        <strong>All Probabilities:</strong>
+                        ${Object.entries(probabilities || {})
+                            .sort(([,a], [,b]) => b - a)
+                            .map(([label, prob]) => `
+                                <div class="prob-item">
+                                    <span class="prob-label">${label}</span>
+                                    <span class="prob-value">${(prob * 100).toFixed(2)}%</span>
+                                </div>
+                            `).join('')}
+                    </div>
+                    ${extraInfo}
+                </div>
+            `;
+        }
+        
+        function createLoadingCard() {
+            return `
+                <div class="result-card">
+                    <div class="loading">🔄 Classifying...</div>
+                </div>
+            `;
+        }
+        
+        function createErrorCard(error) {
+            return `
+                <div class="result-card error">
+                    <div class="error-message">❌ Error: ${error}</div>
+                </div>
+            `;
+        }
+        
+        async function compareModels() {
+            const text = document.getElementById('smsText').value.trim();
+            
+            if (!text) {
+                alert('Please enter an SMS message to classify!');
+                return;
+            }
+            
+            const compareBtn = document.getElementById('compareBtn');
+            compareBtn.disabled = true;
+            compareBtn.textContent = '🔄 Comparing Models...';
+            
+            // Show loading states
+            document.getElementById('originalResult').innerHTML = createLoadingCard();
+            document.getElementById('enhancedResult').innerHTML = createLoadingCard();
+            document.getElementById('comparisonSummary').style.display = 'none';
+            
+            try {
+                // Use the unified API's compare endpoint
+                const response = await fetch(`${UNIFIED_API_URL}/compare`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ text })
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const comparison = await response.json();
+                
+                // Update UI with results
+                document.getElementById('originalResult').innerHTML = 
+                    createResultCard(comparison.original_model, 'original');
+                document.getElementById('enhancedResult').innerHTML = 
+                    createResultCard(comparison.enhanced_model, 'enhanced');
+                
+                // Show comparison summary
+                showComparisonSummary(comparison);
+                
+            } catch (error) {
+                document.getElementById('originalResult').innerHTML = createErrorCard(error.message);
+                document.getElementById('enhancedResult').innerHTML = createErrorCard(error.message);
+                console.error('Comparison error:', error);
+            }
+            
+            // Reset button
+            compareBtn.disabled = false;
+            compareBtn.textContent = '⚡ Compare Models (Unified API)';
+        }
+        
+        function showComparisonSummary(comparison) {
+            const summary = document.getElementById('comparisonSummary');
+            const winnerText = document.getElementById('winnerText');
+            const summaryDetails = document.getElementById('summaryDetails');
+            
+            const comp = comparison.comparison;
+            let winner, details;
+            
+            if (comp.same_prediction) {
+                if (comp.winner === 'enhanced') {
+                    winner = '🎯 Model 2 Model Wins - Higher Confidence!';
+                    winnerText.className = 'winner enhanced';
+                } else {
+                    winner = '🎯 Model 1 Model Wins - Higher Confidence!';
+                    winnerText.className = 'winner original';
+                }
+                details = `Both models predict: <strong>${comparison.original_model.prediction}</strong><br>
+                          Confidence difference: ${comp.confidence_difference.toFixed(4)}`;
+            } else {
+                winner = '⚡ Models Disagree - Different Predictions!';
+                winnerText.className = 'winner';
+                details = `Model 1: <strong>${comparison.original_model.prediction}</strong> (${(comparison.original_model.confidence*100).toFixed(2)}%)<br>
+                          Model 2: <strong>${comparison.enhanced_model.predicted_category}</strong> (${(comparison.enhanced_model.confidence*100).toFixed(2)}%)`;
+            }
+            
+            winnerText.textContent = winner;
+            summaryDetails.innerHTML = details;
+            summary.style.display = 'block';
+        }
+        
+        function testProblematicCase() {
+            document.getElementById('smsText').value = 'debited A/c no.XX9519 22-08-25, 00:10:46 Ltd Not you? SMS';
+            compareModels();
+        }
+        
+        function testFoodCase() {
+            document.getElementById('smsText').value = 'Payment INR 850 to McDonalds from A/c XX4521 on 22-08-25. Order #123456';
+            compareModels();
+        }
+        
+        function testBankingCase() {
+            document.getElementById('smsText').value = 'Your A/c XX4521 credited with INR 25000 on 22-08-25. Available bal: INR 85000. HDFC Bank';
+            compareModels();
+        }
+        
+        function clearResults() {
+            document.getElementById('smsText').value = '';
+            document.getElementById('originalResult').innerHTML = '<div style="text-align: center; color: #6c757d; font-style: italic;">Results will appear here...</div>';
+            document.getElementById('enhancedResult').innerHTML = '<div style="text-align: center; color: #6c757d; font-style: italic;">Results will appear here...</div>';
+            document.getElementById('comparisonSummary').style.display = 'none';
+        }
+        
+        // Auto-focus on text area when page loads
+        window.onload = function() {
+            document.getElementById('smsText').focus();
+        };
+        
+        // Allow Enter key to submit (Ctrl+Enter for new line)
+        document.getElementById('smsText').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter' && !e.ctrlKey && !e.shiftKey) {
+                e.preventDefault();
+                compareModels();
+            }
+        });
+    </script>
+</body>
+</html>
